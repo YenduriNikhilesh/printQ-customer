@@ -355,181 +355,527 @@ const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 let files = [], lastS = null, side = 'single';
-let shopUID = null; // store uid for when order is submitted
+let shopUID = null;
 
 const FC = {
-  pdf:{bg:'#FEE2E2',c:'#DC2626'},doc:{bg:'#DBEAFE',c:'#1D4ED8'},docx:{bg:'#DBEAFE',c:'#1D4ED8'},
-  xls:{bg:'#D1FAE5',c:'#065F46'},xlsx:{bg:'#D1FAE5',c:'#065F46'},ppt:{bg:'#FEF3C7',c:'#92400E'},
-  pptx:{bg:'#FEF3C7',c:'#92400E'},jpg:{bg:'#EDE9FE',c:'#5B21B6'},jpeg:{bg:'#EDE9FE',c:'#5B21B6'},
-  png:{bg:'#EDE9FE',c:'#5B21B6'},gif:{bg:'#EDE9FE',c:'#5B21B6'},txt:{bg:'#F3F4F6',c:'#374151'}
+  pdf:{bg:'#FEE2E2',c:'#DC2626'},
+  doc:{bg:'#DBEAFE',c:'#1D4ED8'},
+  docx:{bg:'#DBEAFE',c:'#1D4ED8'},
+  xls:{bg:'#D1FAE5',c:'#065F46'},
+  xlsx:{bg:'#D1FAE5',c:'#065F46'},
+  ppt:{bg:'#FEF3C7',c:'#92400E'},
+  pptx:{bg:'#FEF3C7',c:'#92400E'},
+  jpg:{bg:'#EDE9FE',c:'#5B21B6'},
+  jpeg:{bg:'#EDE9FE',c:'#5B21B6'},
+  png:{bg:'#EDE9FE',c:'#5B21B6'},
+  gif:{bg:'#EDE9FE',c:'#5B21B6'},
+  txt:{bg:'#F3F4F6',c:'#374151'}
 };
+
 const DC = {bg:'#F3F4F6',c:'#374151'};
 
-function ext(n){const p=n.split('.');return p.length>1?p.pop().toLowerCase():'file'}
-function fmtSz(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(0)+' KB';return(b/1048576).toFixed(1)+' MB'}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function gen4(){return'ID-'+String(Math.floor(1000+Math.random()*9000))}
+function ext(n){
+  const p=n.split('.');
+  return p.length>1?p.pop().toLowerCase():'file';
+}
+
+function fmtSz(b){
+  if(b<1024)return b+' B';
+  if(b<1048576)return(b/1024).toFixed(0)+' KB';
+  return(b/1048576).toFixed(1)+' MB';
+}
+
+function esc(s){
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function gen4(){
+  return 'ID-'+String(
+    Math.floor(1000+Math.random()*9000)
+  );
+}
 
 // ── LOAD SHOP NAME FROM FIRESTORE ──────────────────────────
 async function loadShopName() {
-  const params = new URLSearchParams(window.location.search);
-  const uid    = params.get('uid');
-
-  if (!uid) {
-    // No uid in URL — show invalid QR screen
-    showInvalidQR();
-    return;
-  }
-
-  shopUID = uid;
 
   try {
-    const shopRef  = doc(db, 'shops', uid);
-    const shopSnap = await getDoc(shopRef);
 
-    if (!shopSnap.exists()) {
-      // Shop not found in Firestore
+    // ALWAYS GET FRESH URL
+    const currentURL = new URL(window.location.href);
+
+    const uid =
+      currentURL.searchParams.get('uid');
+
+    console.log('CURRENT UID =', uid);
+
+    // CLEAR OLD SHOP DATA
+    document.getElementById('shop-name').innerHTML =
+      '<span class="bar-name-loading"></span>';
+
+    if (!uid) {
+
       showInvalidQR();
+
       return;
+
     }
 
-    const data     = shopSnap.data();
-    const shopName = data.shopName || 'Print Shop';
+    shopUID = uid;
 
-    // Remove shimmer, set real name
-    const nameEl = document.getElementById('shop-name');
-    nameEl.innerHTML = esc(shopName);
+    // GET SHOP
+    const shopRef =
+      doc(db, 'shops', uid);
 
-    // Also update page title
-    document.title = shopName + ' — Send to Print';
+    const shopSnap =
+      await getDoc(shopRef);
 
-  } catch (err) {
-    console.error('Error loading shop:', err);
-    // On error still show the form — just use fallback name
-    const nameEl = document.getElementById('shop-name');
-    nameEl.innerHTML = 'Print Shop';
+    // SHOP NOT FOUND
+    if (!shopSnap.exists()) {
+
+      showInvalidQR();
+
+      return;
+
+    }
+
+    const data = shopSnap.data();
+
+    console.log('SHOP DATA =', data);
+
+    const shopName =
+      data.shopName || 'Print Shop';
+
+    // UPDATE SHOP NAME
+    const nameEl =
+      document.getElementById('shop-name');
+
+    nameEl.innerHTML =
+      esc(shopName);
+
+    // UPDATE PAGE TITLE
+    document.title =
+      shopName + ' — Send to Print';
+
   }
+
+  catch (err) {
+
+    console.error(
+      'Error loading shop:',
+      err
+    );
+
+    showInvalidQR();
+
+  }
+
 }
 
-function showInvalidQR() {
-  document.getElementById('shop-name').innerHTML = 'Unknown Shop';
-  document.getElementById('up-scr').style.display  = 'none';
-  document.getElementById('invalid-scr').style.display = 'block';
-}
-// ────────────────────────────────────────────────────────────
+function showInvalidQR(){
 
-window.onDrag  = function(e,a){e.preventDefault();document.getElementById('upzone').classList.toggle('drag',a)}
-window.onDrop  = function(e){e.preventDefault();onDrag(e,false);addFiles(e.dataTransfer.files)}
+  document.getElementById(
+    'shop-name'
+  ).innerHTML = 'Unknown Shop';
+
+  document.getElementById(
+    'up-scr'
+  ).style.display = 'none';
+
+  document.getElementById(
+    'invalid-scr'
+  ).style.display = 'block';
+
+}
+
+// FORCE RELOAD EVERY TIME PAGE OPENS
+window.addEventListener('pageshow', () => {
+
+  loadShopName();
+
+});
+
+window.onDrag = function(e,a){
+
+  e.preventDefault();
+
+  document
+    .getElementById('upzone')
+    .classList.toggle('drag',a);
+
+}
+
+window.onDrop = function(e){
+
+  e.preventDefault();
+
+  onDrag(e,false);
+
+  addFiles(e.dataTransfer.files);
+
+}
 
 window.addFiles = function(fl){
-  const MAX=20*1024*1024;
+
+  const MAX = 20*1024*1024;
+
   for(const f of fl){
-    if(f.size>MAX){showToast('⚠️ '+f.name.slice(0,16)+'… is too large (max 20 MB)');continue}
-    if(files.some(x=>x.name===f.name&&x.size===f.size))continue;
+
+    if(f.size > MAX){
+
+      showToast(
+        '⚠️ '+f.name.slice(0,16)+'… is too large (max 20 MB)'
+      );
+
+      continue;
+
+    }
+
+    if(files.some(
+      x=>x.name===f.name&&x.size===f.size
+    )) continue;
+
     files.push(f);
+
   }
+
   renderFiles();
-  document.querySelectorAll('input[type="file"]').forEach(i=>i.value='');
+
+  document
+    .querySelectorAll('input[type="file"]')
+    .forEach(i=>i.value='');
+
 }
 
 function renderFiles(){
-  const el=document.getElementById('flist');
-  el.innerHTML=files.map((f,i)=>{
-    const e=ext(f.name),col=FC[e]||DC;
-    return`<div class="file-item"><div class="fbadge" style="background:${col.bg};color:${col.c}">${esc(e.toUpperCase().slice(0,4))}</div><div class="finfo"><div class="fname">${esc(f.name)}</div><div class="fsize">${fmtSz(f.size)}</div></div><button class="frm" type="button" onclick="rmFile(${i})" aria-label="Remove ${esc(f.name)}"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>`;
+
+  const el =
+    document.getElementById('flist');
+
+  el.innerHTML = files.map((f,i)=>{
+
+    const e = ext(f.name);
+
+    const col = FC[e] || DC;
+
+    return `
+    <div class="file-item">
+
+      <div class="fbadge"
+        style="background:${col.bg};color:${col.c}">
+        ${esc(e.toUpperCase().slice(0,4))}
+      </div>
+
+      <div class="finfo">
+        <div class="fname">${esc(f.name)}</div>
+        <div class="fsize">${fmtSz(f.size)}</div>
+      </div>
+
+      <button
+        class="frm"
+        type="button"
+        onclick="rmFile(${i})">
+
+        ✕
+      </button>
+
+    </div>`;
+
   }).join('');
+
 }
 
-window.rmFile = function(i){files.splice(i,1);renderFiles()}
+window.rmFile = function(i){
 
-window.clearErr = function(){document.getElementById('cname').classList.remove('err');document.getElementById('ferr').style.display='none'}
-window.adjCopies = function(d){const inp=document.getElementById('cop-inp');inp.value=Math.max(1,Math.min(999,(parseInt(inp.value)||1)+d));updatePreview()}
-window.clampCopies = function(){const inp=document.getElementById('cop-inp');inp.value=Math.max(1,Math.min(999,parseInt(inp.value)||1))}
-window.setSide = function(s){
-  side=s;
-  const b1=document.getElementById('s1btn'),b2=document.getElementById('s2btn');
-  b1.classList.toggle('active',s==='single');b2.classList.toggle('active',s==='double');
-  b1.setAttribute('aria-pressed',String(s==='single'));b2.setAttribute('aria-pressed',String(s==='double'));
+  files.splice(i,1);
+
+  renderFiles();
+
+}
+
+window.clearErr = function(){
+
+  document
+    .getElementById('cname')
+    .classList.remove('err');
+
+  document
+    .getElementById('ferr')
+    .style.display='none';
+
+}
+
+window.adjCopies = function(d){
+
+  const inp =
+    document.getElementById('cop-inp');
+
+  inp.value = Math.max(
+    1,
+    Math.min(
+      999,
+      (parseInt(inp.value)||1)+d
+    )
+  );
+
   updatePreview();
+
 }
+
+window.clampCopies = function(){
+
+  const inp =
+    document.getElementById('cop-inp');
+
+  inp.value = Math.max(
+    1,
+    Math.min(
+      999,
+      parseInt(inp.value)||1
+    )
+  );
+
+}
+
+window.setSide = function(s){
+
+  side = s;
+
+  const b1 =
+    document.getElementById('s1btn');
+
+  const b2 =
+    document.getElementById('s2btn');
+
+  b1.classList.toggle(
+    'active',
+    s==='single'
+  );
+
+  b2.classList.toggle(
+    'active',
+    s==='double'
+  );
+
+  updatePreview();
+
+}
+
 function updatePreview(){
-  const c=parseInt(document.getElementById('cop-inp').value)||1;
-  const sz=document.getElementById('sz').value;
-  const pt=document.getElementById('ptype').value;
-  const tl=pt==='bw'?'B&W':'Colour';
-  const sl=side==='single'?'1-Sided':'2-Sided';
-  document.getElementById('prevval').textContent=c+' cop'+(c===1?'y':'ies')+' · '+sz+' · '+tl+' · '+sl;
+
+  const c =
+    parseInt(
+      document.getElementById('cop-inp').value
+    ) || 1;
+
+  const sz =
+    document.getElementById('sz').value;
+
+  const pt =
+    document.getElementById('ptype').value;
+
+  const tl =
+    pt==='bw'
+      ? 'B&W'
+      : 'Colour';
+
+  const sl =
+    side==='single'
+      ? '1-Sided'
+      : '2-Sided';
+
+  document.getElementById(
+    'prevval'
+  ).textContent =
+    c+' copies · '+sz+' · '+tl+' · '+sl;
+
 }
 
 window.submitForm = async function(){
-  const rawName=document.getElementById('cname').value.trim();
-  const name=rawName||gen4();
-  if(files.length===0){showToast('📂 Please add at least one file');return}
-  const settings={copies:parseInt(document.getElementById('cop-inp').value)||1,size:document.getElementById('sz').value,type:document.getElementById('ptype').value,side};
+
+  const rawName =
+    document.getElementById('cname')
+    .value.trim();
+
+  const name =
+    rawName || gen4();
+
+  if(files.length===0){
+
+    showToast(
+      '📂 Please add at least one file'
+    );
+
+    return;
+
+  }
+
+  const settings = {
+
+    copies:
+      parseInt(
+        document.getElementById('cop-inp').value
+      ) || 1,
+
+    size:
+      document.getElementById('sz').value,
+
+    type:
+      document.getElementById('ptype').value,
+
+    side
+
+  };
+
   setLoad(true);
-  try{await simUpload();showSucc(name,settings)}
-  catch(e){showToast('❌ Something went wrong. Please try again.');console.error(e)}
-  finally{setLoad(false)}
+
+  try {
+
+    await simUpload();
+
+    showSucc(name,settings);
+
+  }
+
+  catch(e){
+
+    console.error(e);
+
+    showToast(
+      '❌ Something went wrong'
+    );
+
+  }
+
+  finally {
+
+    setLoad(false);
+
+  }
+
 }
 
 function simUpload(){
+
   return new Promise(res=>{
+
     let p=0;
-    document.getElementById('pw').style.display='block';
-    const lbl=document.getElementById('pl');lbl.style.display='block';
-    const iv=setInterval(()=>{
-      p+=Math.random()*16+5;
-      if(p>=100){p=100;clearInterval(iv);setTimeout(res,300)}
-      document.getElementById('pb').style.width=p+'%';
-      lbl.textContent=p<100?'Uploading '+Math.round(p)+'%…':'Almost done…';
+
+    document.getElementById(
+      'pw'
+    ).style.display='block';
+
+    const lbl =
+      document.getElementById('pl');
+
+    lbl.style.display='block';
+
+    const iv = setInterval(()=>{
+
+      p += Math.random()*16+5;
+
+      if(p>=100){
+
+        p=100;
+
+        clearInterval(iv);
+
+        setTimeout(res,300);
+
+      }
+
+      document.getElementById(
+        'pb'
+      ).style.width = p+'%';
+
+      lbl.textContent =
+        p<100
+        ? 'Uploading '+Math.round(p)+'%…'
+        : 'Almost done…';
+
     },160);
+
   });
+
 }
 
 function setLoad(on){
-  const b=document.getElementById('subbtn');b.disabled=on;
-  document.getElementById('btn-t').textContent=on?'Sending…':'Send to Print';
-  document.getElementById('spin').style.display=on?'block':'none';
+
+  const b =
+    document.getElementById('subbtn');
+
+  b.disabled = on;
+
+  document.getElementById(
+    'btn-t'
+  ).textContent =
+    on ? 'Sending…' : 'Send to Print';
+
 }
 
 function showSucc(name,s){
-  lastS={name,s,files:files.map(f=>f.name)};
-  document.getElementById('up-scr').style.display='none';
-  const sc=document.getElementById('suc');sc.style.display='block';
-  renderSucc();window.scrollTo({top:0,behavior:'smooth'});
+
+  lastS = {
+    name,
+    s,
+    files:files.map(f=>f.name)
+  };
+
+  document.getElementById(
+    'up-scr'
+  ).style.display='none';
+
+  document.getElementById(
+    'suc'
+  ).style.display='block';
+
+  renderSucc();
+
 }
 
 function renderSucc(){
+
   if(!lastS)return;
-  document.getElementById('stoken').textContent=lastS.name;
-  document.getElementById('oc-v').textContent=lastS.s.copies+' cop'+(lastS.s.copies===1?'y':'ies');
-  document.getElementById('os-v').textContent=lastS.s.size;
-  document.getElementById('ot-v').textContent=lastS.s.type==='bw'?'Black & White':'Colour';
-  document.getElementById('od-v').textContent=lastS.s.side==='single'?'1-Sided':'2-Sided';
-  document.getElementById('sfl').innerHTML=lastS.files.map(n=>`<div class="srow"><div class="sdot"></div><div class="snm">${esc(n)}</div></div>`).join('');
+
+  document.getElementById(
+    'stoken'
+  ).textContent = lastS.name;
+
 }
 
 window.resetAll = function(){
-  files=[];lastS=null;side='single';
-  document.getElementById('cname').value='';
-  document.getElementById('cop-inp').value=1;
-  document.getElementById('sz').value='A4';
-  document.getElementById('ptype').value='bw';
-  setSide('single');clearErr();renderFiles();
-  document.getElementById('pw').style.display='none';
-  document.getElementById('pb').style.width='0%';
-  document.getElementById('pl').style.display='none';
-  document.getElementById('suc').style.display='none';
-  document.getElementById('up-scr').style.display='block';
-  updatePreview();window.scrollTo({top:0,behavior:'smooth'});
+  files=[];
+  lastS=null;
+  side='single';
+  document.getElementById(
+    'cname'
+  ).value='';
+
+  renderFiles();
+
 }
+function showToast(msg){
 
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+  const t =
+    document.getElementById('toast');
 
-// ── INIT ────────────────────────────────────────────────────
+  t.textContent = msg;
+
+  t.classList.add('show');
+
+  setTimeout(()=>{
+
+    t.classList.remove('show');
+
+  },3000);
+
+}
+// INIT
 loadShopName();
 updatePreview();
-// ────────────────────────────────────────────────────────────
 
 </script>
 </body>
