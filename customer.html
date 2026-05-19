@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+```html
 <html lang="en">
 <head>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -333,6 +333,11 @@ button,input,select{font:inherit}
 
 import { initializeApp }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import {
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // ─── FIREBASE CONFIG ─────────────────────────────────────────────────────
 const firebaseConfig = {
@@ -528,20 +533,119 @@ function updatePreview(){
     c+' copies · '+sz+' · '+(pt==='bw'?'B&W':'Colour')+' · '+(side==='single'?'1-Sided':'2-Sided');
 }
 
-window.submitForm = async function(){
-  const name = document.getElementById('cname').value.trim() || gen4();
-  if(files.length===0){ showToast('📂 Please add at least one file'); return; }
-  const settings = {
-    copies: parseInt(document.getElementById('cop-inp').value)||1,
-    size:   document.getElementById('sz').value,
-    type:   document.getElementById('ptype').value,
-    side
-  };
-  setLoad(true);
-  try { await simUpload(); showSucc(name,settings); }
-  catch(e){ console.error(e); showToast('❌ Something went wrong'); }
-  finally { setLoad(false); }
-};
+async function sendToPrint() {
+
+  try {
+
+    if (!files.length) {
+      alert("Please add files");
+      return;
+    }
+
+    const nameInput = document.getElementById('cname');
+    const sendBtn = document.getElementById('subbtn');
+
+    const customerName =
+      nameInput.value.trim() ||
+      `Guest-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = "Sending...";
+
+    const copies = parseInt(document.getElementById('cop-inp').value) || 1;
+    const paperSize = document.getElementById('sz').value;
+    const printType = document.getElementById('ptype').value;
+    const sideType = side;
+    const shopId = shopUID;
+
+    const filesData = [];
+
+    for (const file of files) {
+
+      const ext =
+        file.name.split('.').pop().toLowerCase();
+
+      filesData.push({
+        n: file.name,
+        e: ext,
+        s: file.size,
+        type: file.type
+      });
+
+    }
+
+    const jobData = {
+
+      shopId: shopId,
+
+      name: customerName,
+
+      status: 'pending',
+
+      time: new Date().toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+
+      createdAt: serverTimestamp(),
+
+      copies: copies,
+
+      paperSize: paperSize,
+
+      printType: printType,
+
+      side: sideType,
+
+      files: filesData
+
+    };
+
+    await addDoc(
+      collection(db, 'queues'),
+      jobData
+    );
+
+    alert("Files sent successfully!");
+
+    files = [];
+
+    renderFiles();
+
+    nameInput.value = '';
+
+  }
+
+  catch (err) {
+
+    console.error(err);
+
+    alert("Failed to send");
+
+  }
+
+  finally {
+
+    const sendBtn = document.getElementById('subbtn');
+
+    sendBtn.disabled = false;
+
+    sendBtn.innerHTML = `
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M22 2L11 13" stroke="currentColor" stroke-width="2"/>
+        <path d="M22 2L15 22L11 13L2 9L22 2Z"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linejoin="round"/>
+      </svg>
+      Send to Print
+    `;
+
+  }
+
+}
+
+window.submitForm = sendToPrint;
 
 function simUpload(){
   return new Promise(res=>{
@@ -586,3 +690,4 @@ function showToast(msg){
 </script>
 </body>
 </html>
+```
