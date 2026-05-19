@@ -618,11 +618,11 @@ async function sendToPrint() {
 
   catch (err) {
 
-    console.error(err);
+  console.log(err);
 
-    alert("Failed to send");
+  alert(err.message);
 
-  }
+}
 
   finally {
 
