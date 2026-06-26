@@ -371,6 +371,16 @@ const supabase = createClient(
   "sb_publishable_h26PJ9yPAsWxVGr38rgGvg_TccqBK6t"
 );
 
+// TEMPORARY TEST
+(async () => {
+  const { data, error } = await supabase.storage
+    .from("printq-temp")
+    .list();
+
+  console.log("Supabase DATA:", data);
+  console.log("Supabase ERROR:", error);
+})();
+
 
 let files = [], lastS = null, side = 'single';
 let shopUID = null; // store uid for when order is submitted
