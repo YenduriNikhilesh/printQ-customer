@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
 <title>PrintQ — Send to Print</title>
@@ -33,10 +34,15 @@ button,input,select{font:inherit}
 .bar-name{font-size:var(--fs-lg);font-weight:800;color:#fff;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar-sub{font-size:var(--fs-sm);color:rgba(255,255,255,.85);margin-top:2px;font-weight:500}
 
+/* Shop name loading shimmer */
 .bar-name-loading{
-  display:inline-block;width:140px;height:18px;
+  display:inline-block;
+  width:140px;height:18px;
   background:linear-gradient(90deg,rgba(255,255,255,.2) 25%,rgba(255,255,255,.35) 50%,rgba(255,255,255,.2) 75%);
-  background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:6px;vertical-align:middle;
+  background-size:200% 100%;
+  animation:shimmer 1.2s infinite;
+  border-radius:6px;
+  vertical-align:middle;
 }
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
@@ -115,6 +121,7 @@ button,input,select{font:inherit}
 .prog-bar{height:100%;background:linear-gradient(90deg,var(--o),#F59E0B);border-radius:999px;width:0%;transition:width .3s}
 .prog-lbl{font-size:var(--fs-sm);color:var(--ink3);margin-top:7px;text-align:center;display:none;font-weight:600}
 
+/* Invalid QR screen */
 #invalid-scr{display:none;text-align:center;padding:40px 16px}
 .inv-ico{width:72px;height:72px;border-radius:24px;background:var(--failbg);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--fail)}
 .inv-ttl{font-size:var(--fs-xl);font-weight:800;color:var(--ink);margin-bottom:8px}
@@ -133,6 +140,8 @@ button,input,select{font:inherit}
 .srow:first-of-type{border-top:none}
 .srow-l{font-size:var(--fs-md);color:var(--ink3);flex:1;font-weight:500}
 .srow-v{font-size:var(--fs-md);color:var(--ink);font-weight:700;text-align:right}
+.sdot{width:10px;height:10px;border-radius:50%;background:var(--ok);flex-shrink:0;box-shadow:0 0 0 4px rgba(21,128,61,.12)}
+.snm{font-size:var(--fs-md);color:var(--ink2);min-width:0;overflow-wrap:anywhere}
 .again-btn{width:100%;min-height:52px;padding:14px;background:var(--surface);border:2px solid var(--border2);border-radius:var(--rs);font-size:var(--fs-lg);font-weight:700;cursor:pointer;color:var(--ink2);margin-top:12px;transition:background .12s}
 .again-btn:active{background:var(--s3)}
 
@@ -156,8 +165,9 @@ button,input,select{font:inherit}
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6v-8z"/></svg>
   </div>
   <div class="bar-text">
+    <!-- Shop name is filled dynamically from Firestore -->
     <div class="bar-name" id="shop-name">
-      <span class="bar-name-loading"></span>
+      <span class="bar-name-loading" id="shop-name-shimmer"></span>
     </div>
     <div class="bar-sub" id="bar-sub">Send files · We print for you</div>
   </div>
@@ -168,8 +178,8 @@ button,input,select{font:inherit}
 
     <div class="sec-head">
       <span class="sec-num" aria-hidden="true">1</span>
-      <span class="sec-lbl">Add your files</span>
-      <span class="sec-meta">Max 20 MB each</span>
+      <span class="sec-lbl" id="s1lbl">Add your files</span>
+      <span class="sec-meta" id="s1meta">Max 20 MB each</span>
     </div>
 
     <div class="upzone" id="upzone" role="button" aria-label="Upload files" tabindex="0"
@@ -178,8 +188,8 @@ button,input,select{font:inherit}
       <div class="up-ico">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
       </div>
-      <div class="up-t">Tap to upload files</div>
-      <div class="up-h">PDF · Word · Excel · Photo · Any file</div>
+      <div class="up-t" id="up-t">Tap to upload files</div>
+      <div class="up-h" id="up-h">PDF · Word · Excel · Photo · Any file</div>
       <div class="up-tags">
         <span class="tag">PDF</span><span class="tag">WORD</span><span class="tag">EXCEL</span><span class="tag">PHOTO</span><span class="tag">ANY</span>
       </div>
@@ -188,7 +198,7 @@ button,input,select{font:inherit}
     <button class="cam-btn" type="button" aria-label="Take a photo with camera">
       <input type="file" accept="image/*" capture="environment" onchange="addFiles(this.files)"/>
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span>Take a photo with camera</span>
+      <span id="cam-t">Take a photo with camera</span>
     </button>
 
     <div class="file-list" id="flist"></div>
@@ -197,23 +207,23 @@ button,input,select{font:inherit}
 
     <div class="sec-head">
       <span class="sec-num" aria-hidden="true">2</span>
-      <span class="sec-lbl">Your name / Token</span>
+      <span class="sec-lbl" id="s2lbl">Your name / Token</span>
     </div>
     <div class="fw">
       <input class="finput" id="cname" type="text" inputmode="text" autocomplete="name"
              placeholder="e.g. Ravi, Token 7, Order 42" oninput="clearErr()" aria-label="Your name or token number"/>
-      <div class="fhint">Leave blank — we'll give you an auto 4-digit ID</div>
+      <div class="fhint" id="nh">Leave blank — we'll give you an auto 4-digit ID </div>
       <div class="ferr" id="ferr" role="alert"></div>
     </div>
 
     <div class="sec-head">
       <span class="sec-num" aria-hidden="true">3</span>
-      <span class="sec-lbl">Print options</span>
+      <span class="sec-lbl" id="s3lbl">Print options</span>
     </div>
 
     <div class="pgrid">
       <div>
-        <label class="flbl" for="cop-inp">Copies</label>
+        <label class="flbl" id="cl" for="cop-inp">Copies</label>
         <div class="copies-wrap" role="group" aria-label="Number of copies">
           <button class="cop-btn" type="button" onclick="adjCopies(-1)" aria-label="Decrease copies">−</button>
           <input class="cop-inp" id="cop-inp" type="number" min="1" max="999" value="1" inputmode="numeric"
@@ -223,7 +233,7 @@ button,input,select{font:inherit}
       </div>
 
       <div>
-        <label class="flbl" for="sz">Paper size</label>
+        <label class="flbl" id="szl" for="sz">Paper size</label>
         <div class="sel-wrap">
           <select class="fsel" id="sz" onchange="updatePreview()" aria-label="Paper size">
             <option value="A4">A4</option>
@@ -238,7 +248,7 @@ button,input,select{font:inherit}
       </div>
 
       <div>
-        <label class="flbl" for="ptype">Print type</label>
+        <label class="flbl" id="ptl" for="ptype">Print type</label>
         <div class="sel-wrap">
           <select class="fsel" id="ptype" onchange="updatePreview()" aria-label="Print type">
             <option value="bw">⬛ Black &amp; White</option>
@@ -249,17 +259,17 @@ button,input,select{font:inherit}
       </div>
 
       <div>
-        <div class="flbl">Print sides</div>
+        <div class="flbl" id="sdl">Print sides</div>
         <div class="sides-wrap" role="group" aria-label="Print sides">
           <button class="side-btn active" id="s1btn" type="button" onclick="setSide('single')" aria-pressed="true">
             <svg width="20" height="22" viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="1" width="16" height="20" rx="2.5"/><line x1="5" y1="6" x2="15" y2="6"/><line x1="5" y1="10" x2="15" y2="10"/><line x1="5" y1="14" x2="11" y2="14"/></svg>
-            <span>1-Sided</span>
-            <span class="side-desc">One side</span>
+            <span id="s1t">1-Sided</span>
+            <span class="side-desc" id="s1d">One side</span>
           </button>
           <button class="side-btn" id="s2btn" type="button" onclick="setSide('double')" aria-pressed="false">
             <svg width="24" height="22" viewBox="0 0 28 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="1" width="11" height="20" rx="2"/><rect x="16" y="1" width="11" height="20" rx="2"/></svg>
-            <span>2-Sided</span>
-            <span class="side-desc">Both sides</span>
+            <span id="s2t">2-Sided</span>
+            <span class="side-desc" id="s2d">Both sides</span>
           </button>
         </div>
       </div>
@@ -270,7 +280,7 @@ button,input,select{font:inherit}
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
       </div>
       <div class="prev-info">
-        <div class="prev-lbl">Your order</div>
+        <div class="prev-lbl" id="prevlbl">Your order</div>
         <div class="prev-val" id="prevval">1 copy · A4 · B&amp;W · 1-Sided</div>
       </div>
     </div>
@@ -299,258 +309,259 @@ button,input,select{font:inherit}
       <div class="suc-ico" aria-hidden="true">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <div class="suc-ttl">Files sent! ✅</div>
-      <div class="suc-sub">The shop received your files.<br>You'll be called when your print is ready.</div>
+      <div class="suc-ttl" id="sttl">Files sent! ✅</div>
+      <div class="suc-sub" id="ssub">The shop received your files.<br>You'll be called when your print is ready.</div>
       <div class="suc-token" aria-label="Your order ID">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span id="stoken"></span>
       </div>
     </div>
     <div class="suc-box">
-      <div class="suc-box-t">Order details</div>
-      <div class="srow"><span class="srow-l">Copies</span><span class="srow-v" id="oc-v"></span></div>
-      <div class="srow"><span class="srow-l">Paper size</span><span class="srow-v" id="os-v"></span></div>
-      <div class="srow"><span class="srow-l">Print type</span><span class="srow-v" id="ot-v"></span></div>
-      <div class="srow"><span class="srow-l">Sides</span><span class="srow-v" id="od-v"></span></div>
+      <div class="suc-box-t" id="sodt">Order details</div>
+      <div class="srow"><span class="srow-l" id="oc-l">Copies</span><span class="srow-v" id="oc-v"></span></div>
+      <div class="srow"><span class="srow-l" id="os-l">Paper size</span><span class="srow-v" id="os-v"></span></div>
+      <div class="srow"><span class="srow-l" id="ot-l">Print type</span><span class="srow-v" id="ot-v"></span></div>
+      <div class="srow"><span class="srow-l" id="od-l">Sides</span><span class="srow-v" id="od-v"></span></div>
     </div>
     <div class="suc-box" style="margin-top:10px">
-      <div class="suc-box-t">Files submitted</div>
+      <div class="suc-box-t" id="sfst">Files submitted</div>
       <div id="sfl"></div>
     </div>
-    <button class="again-btn" type="button" onclick="resetAll()">Send more files</button>
+    <button class="again-btn" id="agbtn" type="button" onclick="resetAll()">Send more files</button>
   </div>
 
 </div>
 
-<div class="footer" role="contentinfo">Powered by PrintQ · Your files are safe &amp; secure 🔒</div>
+<div class="footer" id="ftxt" role="contentinfo">Powered by PrintQ · Your files are safe &amp; secure 🔒</div>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<!-- Firebase SDK -->
+<!-- Firebase SDK (same version as your app) -->
 <script type="module">
 'use strict';
 
-import { initializeApp }             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
-// ─── FIREBASE CONFIG ─────────────────────────────────────────────────────
+import { createClient } from "https://esm.sh/@supabase/supabase-js";
+
+
+// ─── YOUR FIREBASE CONFIG ───────────────────────────────────
 const firebaseConfig = {
-  apiKey:            "AIzaSyC5fBDfg7Zjy9FFljr-CijE1abAozUxN8U",
-  authDomain:        "printq-91889.firebaseapp.com",
-  projectId:         "printq-91889",
-  storageBucket:     "printq-91889.firebasestorage.app",
+  apiKey: "AIzaSyC5fBDfg7Zjy9FFljr-CijE1abAozUxN8U",
+  authDomain: "printq-91889.firebaseapp.com",
+  projectId: "printq-91889",
+  storageBucket: "printq-91889.firebasestorage.app",
   messagingSenderId: "1034689462220",
-  appId:             "1:1034689462220:web:b629f65744fca3249c2769"
+  appId: "1:1034689462220:web:b629f65744fca3249c2769"
 };
-// ─────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────
 
 const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const db = getFirestore(app);
+
+// Firebase Storage (keep for now, we'll remove it later)
+const storage = getStorage(app);
+
+// Supabase
+const supabase = createClient(
+  "https://wrmbjauyailhzfflbcib.supabase.co",
+  "sb_publishable_h26PJ9yPAsWxVGr38rgGvg_TccqBK6t"
+);
+
 
 let files = [], lastS = null, side = 'single';
-let shopUID = null;
-
-// Guard: prevent parallel runs of initCustomerPage
-let _initRunning = false;
+let shopUID = null; // store uid for when order is submitted
 
 const FC = {
-  pdf:{bg:'#FEE2E2',c:'#DC2626'},
-  doc:{bg:'#DBEAFE',c:'#1D4ED8'},docx:{bg:'#DBEAFE',c:'#1D4ED8'},
-  xls:{bg:'#D1FAE5',c:'#065F46'},xlsx:{bg:'#D1FAE5',c:'#065F46'},
-  ppt:{bg:'#FEF3C7',c:'#92400E'},pptx:{bg:'#FEF3C7',c:'#92400E'},
-  jpg:{bg:'#EDE9FE',c:'#5B21B6'},jpeg:{bg:'#EDE9FE',c:'#5B21B6'},
-  png:{bg:'#EDE9FE',c:'#5B21B6'},gif:{bg:'#EDE9FE',c:'#5B21B6'},
-  txt:{bg:'#F3F4F6',c:'#374151'}
+  pdf:{bg:'#FEE2E2',c:'#DC2626'},doc:{bg:'#DBEAFE',c:'#1D4ED8'},docx:{bg:'#DBEAFE',c:'#1D4ED8'},
+  xls:{bg:'#D1FAE5',c:'#065F46'},xlsx:{bg:'#D1FAE5',c:'#065F46'},ppt:{bg:'#FEF3C7',c:'#92400E'},
+  pptx:{bg:'#FEF3C7',c:'#92400E'},jpg:{bg:'#EDE9FE',c:'#5B21B6'},jpeg:{bg:'#EDE9FE',c:'#5B21B6'},
+  png:{bg:'#EDE9FE',c:'#5B21B6'},gif:{bg:'#EDE9FE',c:'#5B21B6'},txt:{bg:'#F3F4F6',c:'#374151'}
 };
 const DC = {bg:'#F3F4F6',c:'#374151'};
 
-function ext(n){ const p=n.split('.'); return p.length>1?p.pop().toLowerCase():'file'; }
-function fmtSz(b){ if(b<1024)return b+' B'; if(b<1048576)return(b/1024).toFixed(0)+' KB'; return(b/1048576).toFixed(1)+' MB'; }
-function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function gen4(){ return 'ID-'+String(Math.floor(1000+Math.random()*9000)); }
+function ext(n){const p=n.split('.');return p.length>1?p.pop().toLowerCase():'file'}
+function fmtSz(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(0)+' KB';return(b/1048576).toFixed(1)+' MB'}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function gen4(){return'ID-'+String(Math.floor(1000+Math.random()*9000))}
 
-// ── SAFE UID READER — uses URLSearchParams, never string concat ───────────
-function getUidFromURL() {
-  return new URLSearchParams(window.location.search).get('uid') || null;
-}
+// ── LOAD SHOP NAME FROM FIRESTORE ──────────────────────────
+async function loadShopName() {
+  const params = new URLSearchParams(window.location.search);
+  const uid    = params.get('uid');
 
-// ── FULL UI RESET ─────────────────────────────────────────────────────────
-function resetUI() {
-  files = []; lastS = null; side = 'single';
-  document.getElementById('cname').value     = '';
-  document.getElementById('cop-inp').value   = '1';
-  document.getElementById('sz').value        = 'A4';
-  document.getElementById('ptype').value     = 'bw';
-  document.getElementById('s1btn').classList.add('active');
-  document.getElementById('s2btn').classList.remove('active');
-  document.getElementById('pb').style.width  = '0%';
-  document.getElementById('pw').style.display = 'none';
-  document.getElementById('pl').style.display = 'none';
-  document.getElementById('up-scr').style.display      = 'block';
-  document.getElementById('suc').style.display         = 'none';
-  document.getElementById('invalid-scr').style.display = 'none';
-  renderFiles();
-  updatePreview();
-}
+  if (!uid) {
+    // No uid in URL — show invalid QR screen
+    showInvalidQR();
+    return;
+  }
 
-// ── SHOW INVALID QR ───────────────────────────────────────────────────────
-function showInvalidQR() {
-  document.getElementById('shop-name').innerHTML        = 'Unknown Shop';
-  document.getElementById('up-scr').style.display       = 'none';
-  document.getElementById('invalid-scr').style.display = 'block';
-}
-
-// ── LOAD SHOP FROM FIRESTORE ──────────────────────────────────────────────
-async function loadShopName(uid) {
-  document.getElementById('shop-name').innerHTML =
-    '<span class="bar-name-loading"></span>';
-
-  const shopRef  = doc(db, 'shops', uid);
-  const shopSnap = await getDoc(shopRef);
-
-  if (!shopSnap.exists()) { showInvalidQR(); return false; }
-
-  const data     = shopSnap.data();
-  const shopName = data.shopName || 'Print Shop';
-
-  document.getElementById('shop-name').innerHTML = esc(shopName);
-  document.title = shopName + ' — Send to Print';
-  return true;
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// MAIN INIT — called on load, bfcache restore, and tab focus
-// ─────────────────────────────────────────────────────────────────────────
-async function initCustomerPage() {
-
-  if (_initRunning) return;
-  _initRunning = true;
+  shopUID = uid;
 
   try {
+    const shopRef  = doc(db, 'shops', uid);
+    const shopSnap = await getDoc(shopRef);
 
-    // STEP 1: Read uid safely — URLSearchParams never breaks on missing '?'
-    const freshUID = getUidFromURL();
-    console.log('initCustomerPage uid:', freshUID);
-
-    if (!freshUID) { showInvalidQR(); return; }
-
-    // STEP 2: Detect shop switch
-    const previousUID = sessionStorage.getItem('active_shop_uid');
-    if (previousUID && previousUID !== freshUID) {
-      console.log('Shop switched:', previousUID, '→', freshUID);
-      resetUI();  // clear all stale state before loading new shop
+    if (!shopSnap.exists()) {
+      // Shop not found in Firestore
+      showInvalidQR();
+      return;
     }
 
-    // STEP 3: Persist uid for future switch detection
-    sessionStorage.setItem('active_shop_uid', freshUID);
-    shopUID = freshUID;
+    const data     = shopSnap.data();
+    const shopName = data.shopName || 'Print Shop';
 
-    // STEP 4: Always fetch fresh from Firestore
-    const ok = await loadShopName(freshUID);
-    if (ok) updatePreview();
+    // Remove shimmer, set real name
+    const nameEl = document.getElementById('shop-name');
+    nameEl.innerHTML = esc(shopName);
+
+    // Also update page title
+    document.title = shopName + ' — Send to Print';
 
   } catch (err) {
-    console.error('initCustomerPage error:', err);
-    showInvalidQR();
-  } finally {
-    _initRunning = false;
+    console.error('Error loading shop:', err);
+    // On error still show the form — just use fallback name
+    const nameEl = document.getElementById('shop-name');
+    nameEl.innerHTML = 'Print Shop';
   }
-
 }
 
-// ── Trigger points ────────────────────────────────────────────────────────
+function showInvalidQR() {
+  document.getElementById('shop-name').innerHTML = 'Unknown Shop';
+  document.getElementById('up-scr').style.display  = 'none';
+  document.getElementById('invalid-scr').style.display = 'block';
+}
+// ────────────────────────────────────────────────────────────
 
-// 1. First load
-initCustomerPage();
+window.onDrag  = function(e,a){e.preventDefault();document.getElementById('upzone').classList.toggle('drag',a)}
+window.onDrop  = function(e){e.preventDefault();onDrag(e,false);addFiles(e.dataTransfer.files)}
 
-// 2. Back/forward cache (bfcache) — critical for Android Chrome
-window.addEventListener('pageshow', (e) => {
-  if (e.persisted) {
-    console.log('bfcache restore — reinit');
-    initCustomerPage();
-  }
-});
-
-// 3. Tab becomes visible (phone unlock, app switch, tab switch)
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    console.log('visibilitychange visible — reinit');
-    initCustomerPage();
-  }
-});
-
-// ── File handling ─────────────────────────────────────────────────────────
-
-window.onDrag = function(e,a){ e.preventDefault(); document.getElementById('upzone').classList.toggle('drag',a); };
-window.onDrop = function(e){ e.preventDefault(); onDrag(e,false); addFiles(e.dataTransfer.files); };
-
-window.addFiles = function(fl) {
-  const MAX = 20*1024*1024;
-  for(const f of fl) {
-    if(f.size>MAX){ showToast('⚠️ '+f.name.slice(0,16)+'… is too large (max 20 MB)'); continue; }
-    if(files.some(x=>x.name===f.name&&x.size===f.size)) continue;
+window.addFiles = function(fl){
+  const MAX=20*1024*1024;
+  for(const f of fl){
+    if(f.size>MAX){showToast('⚠️ '+f.name.slice(0,16)+'… is too large (max 20 MB)');continue}
+    if(files.some(x=>x.name===f.name&&x.size===f.size))continue;
     files.push(f);
   }
   renderFiles();
   document.querySelectorAll('input[type="file"]').forEach(i=>i.value='');
-};
+}
 
 function renderFiles(){
-  const el = document.getElementById('flist');
-  el.innerHTML = files.map((f,i)=>{
-    const e=ext(f.name), col=FC[e]||DC;
-    return `<div class="file-item">
-      <div class="fbadge" style="background:${col.bg};color:${col.c}">${esc(e.toUpperCase().slice(0,4))}</div>
-      <div class="finfo"><div class="fname">${esc(f.name)}</div><div class="fsize">${fmtSz(f.size)}</div></div>
-      <button class="frm" type="button" onclick="rmFile(${i})">✕</button>
-    </div>`;
+  const el=document.getElementById('flist');
+  el.innerHTML=files.map((f,i)=>{
+    const e=ext(f.name),col=FC[e]||DC;
+    return`<div class="file-item"><div class="fbadge" style="background:${col.bg};color:${col.c}">${esc(e.toUpperCase().slice(0,4))}</div><div class="finfo"><div class="fname">${esc(f.name)}</div><div class="fsize">${fmtSz(f.size)}</div></div><button class="frm" type="button" onclick="rmFile(${i})" aria-label="Remove ${esc(f.name)}"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>`;
   }).join('');
 }
 
-window.rmFile    = function(i){ files.splice(i,1); renderFiles(); };
-window.clearErr  = function(){ document.getElementById('cname').classList.remove('err'); document.getElementById('ferr').style.display='none'; };
-window.adjCopies = function(d){ const inp=document.getElementById('cop-inp'); inp.value=Math.max(1,Math.min(999,(parseInt(inp.value)||1)+d)); updatePreview(); };
-window.clampCopies = function(){ const inp=document.getElementById('cop-inp'); inp.value=Math.max(1,Math.min(999,parseInt(inp.value)||1)); };
+window.rmFile = function(i){files.splice(i,1);renderFiles()}
 
+window.clearErr = function(){document.getElementById('cname').classList.remove('err');document.getElementById('ferr').style.display='none'}
+window.adjCopies = function(d){const inp=document.getElementById('cop-inp');inp.value=Math.max(1,Math.min(999,(parseInt(inp.value)||1)+d));updatePreview()}
+window.clampCopies = function(){const inp=document.getElementById('cop-inp');inp.value=Math.max(1,Math.min(999,parseInt(inp.value)||1))}
 window.setSide = function(s){
   side=s;
-  document.getElementById('s1btn').classList.toggle('active',s==='single');
-  document.getElementById('s2btn').classList.toggle('active',s==='double');
+  const b1=document.getElementById('s1btn'),b2=document.getElementById('s2btn');
+  b1.classList.toggle('active',s==='single');b2.classList.toggle('active',s==='double');
+  b1.setAttribute('aria-pressed',String(s==='single'));b2.setAttribute('aria-pressed',String(s==='double'));
   updatePreview();
-};
-
+}
 function updatePreview(){
   const c=parseInt(document.getElementById('cop-inp').value)||1;
   const sz=document.getElementById('sz').value;
   const pt=document.getElementById('ptype').value;
-  document.getElementById('prevval').textContent =
-    c+' copies · '+sz+' · '+(pt==='bw'?'B&W':'Colour')+' · '+(side==='single'?'1-Sided':'2-Sided');
+  const tl=pt==='bw'?'B&W':'Colour';
+  const sl=side==='single'?'1-Sided':'2-Sided';
+  document.getElementById('prevval').textContent=c+' cop'+(c===1?'y':'ies')+' · '+sz+' · '+tl+' · '+sl;
 }
 
 window.submitForm = async function(){
-  const name = document.getElementById('cname').value.trim() || gen4();
-  if(files.length===0){ showToast('📂 Please add at least one file'); return; }
-  const settings = {
-    copies: parseInt(document.getElementById('cop-inp').value)||1,
-    size:   document.getElementById('sz').value,
-    type:   document.getElementById('ptype').value,
-    side
-  };
+  const rawName=document.getElementById('cname').value.trim();
+  const name=rawName||gen4();
+  if(files.length===0){showToast('📂 Please add at least one file');return}
+  if(!shopUID){showToast('⚠️ Invalid Shop QR scan link');return}
+  const settings={copies:parseInt(document.getElementById('cop-inp').value)||1,size:document.getElementById('sz').value,type:document.getElementById('ptype').value,side};
   setLoad(true);
-  try { await simUpload(); showSucc(name,settings); }
-  catch(e){ console.error(e); showToast('❌ Something went wrong'); }
-  finally { setLoad(false); }
-};
+  try{
+    const uploadedFiles = [];
+    const requestId = 'req-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+    let totalBytes = files.reduce((acc, f) => acc + f.size, 0);
+    let uploadedBytes = 0;
+
+    document.getElementById('pw').style.display = 'block';
+    const lbl = document.getElementById('pl');
+    lbl.style.display = 'block';
+    lbl.textContent = 'Uploading 0%…';
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const storagePath = `temp_files/${shopUID}/${requestId}/${file.name}`;
+      const fileRef = ref(storage, storagePath);
+      const uploadTask = uploadBytesResumable(fileRef, file);
+
+      await new Promise((resolve, reject) => {
+        uploadTask.on('state_changed',
+          (snapshot) => {
+            const fileProgress = snapshot.bytesTransferred;
+            const currentTotalUploaded = uploadedBytes + fileProgress;
+            const overallPct = Math.min(99, Math.round((currentTotalUploaded / totalBytes) * 100));
+            document.getElementById('pb').style.width = overallPct + '%';
+            lbl.textContent = `Uploading ${overallPct}%… (File ${i+1}/${files.length})`;
+          },
+          (error) => {
+            console.error("Upload error:", error);
+            reject(error);
+          },
+          async () => {
+            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+            uploadedFiles.push({
+              n: file.name,
+              e: ext(file.name),
+              s: fmtSz(file.size),
+              url: downloadUrl,
+              storagePath: storagePath
+            });
+            uploadedBytes += file.size;
+            resolve();
+          }
+        );
+      });
+    }
+
+    document.getElementById('pb').style.width = '100%';
+    lbl.textContent = 'Submitting order…';
+
+    const queueRef = collection(db, 'shops', shopUID, 'queue');
+    await addDoc(queueRef, {
+      customerName: name,
+      timestamp: serverTimestamp(),
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      status: 'pending',
+      copies: settings.copies,
+      size: settings.size,
+      type: settings.type,
+      side: settings.side,
+      files: uploadedFiles
+    });
+
+    showSucc(name, settings);
+  }
+  catch(e){showToast('❌ Upload failed. Please check your network and try again.');console.error(e)}
+  finally{setLoad(false)}
+}
 
 function simUpload(){
   return new Promise(res=>{
     let p=0;
     document.getElementById('pw').style.display='block';
-    const lbl=document.getElementById('pl'); lbl.style.display='block';
+    const lbl=document.getElementById('pl');lbl.style.display='block';
     const iv=setInterval(()=>{
       p+=Math.random()*16+5;
-      if(p>=100){ p=100; clearInterval(iv); setTimeout(res,300); }
+      if(p>=100){p=100;clearInterval(iv);setTimeout(res,300)}
       document.getElementById('pb').style.width=p+'%';
       lbl.textContent=p<100?'Uploading '+Math.round(p)+'%…':'Almost done…';
     },160);
@@ -558,30 +569,49 @@ function simUpload(){
 }
 
 function setLoad(on){
-  document.getElementById('subbtn').disabled=on;
+  const b=document.getElementById('subbtn');b.disabled=on;
   document.getElementById('btn-t').textContent=on?'Sending…':'Send to Print';
+  document.getElementById('spin').style.display=on?'block':'none';
 }
 
 function showSucc(name,s){
   lastS={name,s,files:files.map(f=>f.name)};
   document.getElementById('up-scr').style.display='none';
-  document.getElementById('suc').style.display='block';
-  document.getElementById('stoken').textContent=name;
-  document.getElementById('oc-v').textContent=s.copies;
-  document.getElementById('os-v').textContent=s.size;
-  document.getElementById('ot-v').textContent=s.type==='bw'?'Black & White':'Colour';
-  document.getElementById('od-v').textContent=s.side==='single'?'1-Sided':'2-Sided';
-  document.getElementById('sfl').innerHTML=
-    lastS.files.map(n=>`<div class="srow"><span class="srow-l">${esc(n)}</span></div>`).join('');
+  const sc=document.getElementById('suc');sc.style.display='block';
+  renderSucc();window.scrollTo({top:0,behavior:'smooth'});
 }
 
-window.resetAll = function(){ resetUI(); };
-
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3000);
+function renderSucc(){
+  if(!lastS)return;
+  document.getElementById('stoken').textContent=lastS.name;
+  document.getElementById('oc-v').textContent=lastS.s.copies+' cop'+(lastS.s.copies===1?'y':'ies');
+  document.getElementById('os-v').textContent=lastS.s.size;
+  document.getElementById('ot-v').textContent=lastS.s.type==='bw'?'Black & White':'Colour';
+  document.getElementById('od-v').textContent=lastS.s.side==='single'?'1-Sided':'2-Sided';
+  document.getElementById('sfl').innerHTML=lastS.files.map(n=>`<div class="srow"><div class="sdot"></div><div class="snm">${esc(n)}</div></div>`).join('');
 }
+
+window.resetAll = function(){
+  files=[];lastS=null;side='single';
+  document.getElementById('cname').value='';
+  document.getElementById('cop-inp').value=1;
+  document.getElementById('sz').value='A4';
+  document.getElementById('ptype').value='bw';
+  setSide('single');clearErr();renderFiles();
+  document.getElementById('pw').style.display='none';
+  document.getElementById('pb').style.width='0%';
+  document.getElementById('pl').style.display='none';
+  document.getElementById('suc').style.display='none';
+  document.getElementById('up-scr').style.display='block';
+  updatePreview();window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+// ── INIT ────────────────────────────────────────────────────
+loadShopName();
+updatePreview();
+// ────────────────────────────────────────────────────────────
 
 </script>
 </body>
