@@ -548,27 +548,23 @@ window.submitForm = async function(){
     document.getElementById('pb').style.width = '100%';
     lbl.textContent = 'Submitting order…';
 
-    try {
-  const queueRef = collection(db, 'shops', shopUID, 'queue');
+ const queueRef = collection(db, 'shops', shopUID, 'queue');
+    await addDoc(queueRef, {
+      customerName: name,
+      timestamp: serverTimestamp(),
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      status: 'pending',
+      copies: settings.copies,
+      size: settings.size,
+      type: settings.type,
+      side: settings.side,
+      files: uploadedFiles
+    });
 
-  await addDoc(queueRef, {
-    customerName: name,
-    timestamp: serverTimestamp(),
-    time: new Date().toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    }),
-    status: 'pending',
-    copies: settings.copies,
-    size: settings.size,
-    type: settings.type,
-    side: settings.side,
-    files: uploadedFiles
-  });
-
-  console.log("✅ Queue document created");
-} catch (err) {
-  console.error("QUEUE ERROR:", err);
+    showSucc(name, settings);
+  }
+  catch(e){showToast('❌ Upload failed. Please check your network and try again.');console.error(e)}
+  finally{setLoad(false)}
 }
 
 function simUpload(){
